@@ -59,6 +59,13 @@ const AssessmentController = {
     */
     submitAssessment: async (req, res) => {
         try {
+            //only student can submit
+            if (req.role !== 'student') {
+                return res.status(400).json({
+                    success: false,
+                    message: "Access denied. "
+                })
+            }
             const { link, assessmentId } = req.body;
             const file = req.file || undefined
             const fileUrl = process.env.SITE_URL + '/uploads/' + file?.filename
@@ -87,6 +94,12 @@ const AssessmentController = {
 
             //check deadline remaining have or throw error
             const assessmentDetails = await assessmentModel.findOne({ _id: verifyData.value.assessmentId })
+            if (!assessmentDetails) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Invalid request with wrong assessment information."
+                })
+            }
             if (verifyData.value.dateOfSubmit > new Date(assessmentDetails.deadline)) {
                 return res.status(400).json({
                     success: false,
@@ -152,8 +165,7 @@ const AssessmentController = {
 
             return res.status(200).json({
                 success: true,
-                response: 'SuccessFull',
-                updateWithFeedback
+                response: 'SuccessFully marked.',
             })
 
         } catch (error) {
@@ -191,6 +203,12 @@ const AssessmentController = {
     */
     ownSubmitList: async (req, res) => {
         try {
+            if (req.role !== "student") {
+                return res.status(401).json({
+                    success: false,
+                    message: "Access Denied. "
+                })
+            }
             const userId = req.userId
             const ownList = await submitAssessmentModel.find({ studentId: userId })
             return res.status(200).json({

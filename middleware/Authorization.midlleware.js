@@ -20,7 +20,7 @@ const authorizeUser = async (req, res, next) => {
         }
         const user = await userModel.findOne({ email: verifyToken.email })
         if (verifyToken && user) {
-            req.userId = user._id;
+            req.userId = user._id.toString();
             req.email = user.email;
             req.role = user.role;
             req.name = user.name

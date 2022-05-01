@@ -102,6 +102,30 @@ const AuthController = {
                 error: error.message
             })
         }
+    },
+    /* 
+        Remove user
+    */
+    removeUser: async (req, res) => {
+        try {
+            if (req.role !== 'admin') {
+                return res.status(401).json({
+                    success: false,
+                    message: "Access denied. "
+                })
+            }
+            const { email } = req.body;
+            const deleteUser = await userModel.deleteOne({ email })
+            return res.status(200).json({
+                success: true,
+                response: 'Successfully user deleted.'
+            })
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                error: error.message
+            })
+        }
     }
 }
 

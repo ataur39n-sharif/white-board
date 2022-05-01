@@ -13,6 +13,7 @@ app.use(express.json())
 app.use('/', require('./routes/routes'))
 app.use('/', express.static(path.join(__dirname, 'public')))
 
+//mongoDB connection setup
 mongoose
     .connect(process.env.MONGO_URI, {
         useNewUrlParser: true,

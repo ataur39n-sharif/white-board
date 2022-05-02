@@ -55,6 +55,83 @@ const AssessmentController = {
         }
     },
     /* 
+        update assessment
+    */
+    updateAssessment: async (req, res) => {
+        try {
+            if (req.role !== "admin") {
+                return res.status(401).json({
+                    success: false,
+                    message: "Access denied. "
+                })
+            }
+            const assessmentId = req.params.id;
+            const { title, description, deadline } = req.body;
+
+            const assessment = await assessmentModel.findOne({ _id: assessmentId })
+            if (!assessment) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'No assessment found. '
+                })
+            }
+            //expected data schema
+            const dataSchema = Joi.object({
+                title: Joi.string(),
+                description: Joi.string(),
+                deadline: Joi.date().greater(assessment.deadline).format('YYYY-MM-DD')
+            })
+            //valid req data with data schema
+            const verifyData = dataSchema.validate({
+                title,
+                description,
+                deadline,
+            })
+            if (verifyData.error) {
+                return res.status(400).json({
+                    success: false,
+                    error: verifyData.error.details,
+                })
+            }
+
+            const update = await assessmentModel.updateOne({ _id: assessmentId }, { ...verifyData.value })
+
+            return res.status(200).json({
+                success: true,
+                response: 'Successfully updated. '
+            })
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                error: error.message
+            })
+        }
+    },
+    /* 
+        delete assessment
+    */
+    deleteAssessment: async (req, res) => {
+        try {
+            if (req.role !== "admin") {
+                return res.status(401).json({
+                    success: false,
+                    message: "Access denied. "
+                })
+            }
+            const id = req.params.id;
+            const deleteAssessment = await assessmentModel.findOneAndDelete({ _id: id })
+            return res.status(200).json({
+                success: true,
+                response: "Successfully deleted. ",
+            })
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                error: error.message
+            })
+        }
+    },
+    /* 
         submit an assessment
     */
     submitAssessment: async (req, res) => {
@@ -132,42 +209,43 @@ const AssessmentController = {
     giveFeedback: async (req, res) => {
         try {
             //without mentor or admin no one can give student's submission feedback
-            if (req.role === 'student') {
+            if (req.role === 'mentor' || req.role === "admin") {
+                const submissionId = req.params.id
+                const { marks, remarks } = req.body;
+
+                //expected data schema
+                const dataSchema = Joi.object({
+                    marks: Joi.number().required().integer().min(0).max(100),
+                    remarks: Joi.string().required(),
+                })
+
+                //valid data with schema
+                const verifyData = dataSchema.validate({ marks, remarks })
+                if (verifyData.error) {
+                    return res.status(400).json({
+                        success: false,
+                        error: verifyData.error.details
+                    })
+                }
+
+                const updateWithFeedback = await submitAssessmentModel.findOneAndUpdate({ _id: submissionId }, {
+                    grades: {
+                        marks: verifyData.value.marks,
+                        remarks: verifyData.value.remarks
+                    }
+                })
+
+                return res.status(200).json({
+                    success: true,
+                    response: 'SuccessFully marked.',
+                })
+            } else {
                 return res.status(401).json({
                     success: false,
                     message: 'Unauthorize access. !'
                 })
+
             }
-
-            const { submissionId, marks, remarks } = req.body;
-
-            //expected data schema
-            const dataSchema = Joi.object({
-                marks: Joi.number().required().integer().min(0).max(100),
-                remarks: Joi.string().required(),
-            })
-
-            //valid data with schema
-            const verifyData = dataSchema.validate({ marks, remarks })
-            if (verifyData.error) {
-                return res.status(400).json({
-                    success: false,
-                    error: verifyData.error.details
-                })
-            }
-
-            const updateWithFeedback = await submitAssessmentModel.findOneAndUpdate({ _id: submissionId }, {
-                grades: {
-                    marks: verifyData.value.marks,
-                    remarks: verifyData.value.remarks
-                }
-            })
-
-            return res.status(200).json({
-                success: true,
-                response: 'SuccessFully marked.',
-            })
-
         } catch (error) {
             return res.status(500).json({
                 success: false,

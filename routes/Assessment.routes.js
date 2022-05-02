@@ -5,7 +5,7 @@ const upload = require('../middleware/Upload.middleware')
 const assessmentRoute = require('express').Router()
 
 assessmentRoute
-    .post('/', authorizeUser, AssessmentController.newAssessment)
+    .post('/create', authorizeUser, AssessmentController.newAssessment)
     .put('/update/:id', authorizeUser, AssessmentController.updateAssessment)
     .delete('/delete/:id', authorizeUser, AssessmentController.deleteAssessment)
     .post('/submit', authorizeUser, upload.single('file'), AssessmentController.submitAssessment)
